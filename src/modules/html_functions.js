@@ -43,10 +43,16 @@ export const drop = () => {
   }, 2000);
 };
 
-const doneButtonListener = (toDoList, taskItem, taskInput,
-  task, doneButton, removeButton, moreButton) => {
+const doneButtonListener = ({
+  toDoList, taskItem, taskInput,
+  task, doneButton, removeButton, moreButton,
+}) => {
   if (toDoList.taskExists(taskInput.value, task.index)) {
-    showPopup();
+    showPopup('');
+    return;
+  }
+  if (task.description === '') {
+    showPopup('');
     return;
   }
 
@@ -66,7 +72,7 @@ const doneButtonListener = (toDoList, taskItem, taskInput,
   }, 100);
 };
 
-const removeButtonListener = (toDoList, taskItem, task) => {
+const removeButtonListener = ({ toDoList, taskItem, task }) => {
   tasksList.querySelectorAll('li').item(task.index * 2).remove();
   taskItem.classList.remove('animate__bounceInLeft');
   setTimeout(() => {
@@ -78,16 +84,25 @@ const removeButtonListener = (toDoList, taskItem, task) => {
   toDoList.removeTask(task);
 };
 
-const moreButtonListener = (toDoList, taskItem, taskInput, task,
-  doneButton, removeButton, moreButton) => {
+const moreButtonListener = ({
+  toDoList, taskItem, taskInput, task,
+  doneButton, removeButton, moreButton,
+}) => {
   if (!taskInput.disabled) {
     return;
   }
 
   taskInput.addEventListener('keyup', (e) => {
     if (e.key === 'Enter' || e.keyCode === 13) {
-      doneButtonListener(toDoList, taskItem, taskInput,
-        task, doneButton, removeButton, moreButton);
+      doneButtonListener({
+        toDoList,
+        taskItem,
+        taskInput,
+        task,
+        doneButton,
+        removeButton,
+        moreButton,
+      });
     }
   });
 
@@ -101,7 +116,9 @@ const moreButtonListener = (toDoList, taskItem, taskInput, task,
   }, 100);
 };
 
-const checkboxListener = (toDoList, task, checkbox, taskInput) => {
+const checkboxListener = ({
+  toDoList, task, checkbox, taskInput,
+}) => {
   task.completed = checkbox.checked;
   if (checkbox.checked === true) {
     taskInput.classList.add('checked');
@@ -158,21 +175,32 @@ const getNewTaskNode = (task, toDoList) => {
   taskItem.appendChild(taskDetail);
   taskItem.appendChild(moreButton);
 
+  const newTaskObject = {
+    toDoList,
+    taskItem,
+    taskInput,
+    task,
+    checkbox,
+    doneButton,
+    removeButton,
+    moreButton,
+  };
+
   // Add Event Listeners
   doneButton.addEventListener('click', () => {
-    doneButtonListener(toDoList, taskItem, taskInput, task, doneButton, removeButton, moreButton);
+    doneButtonListener(newTaskObject);
   });
 
   removeButton.addEventListener('click', () => {
-    removeButtonListener(toDoList, taskItem, task);
+    removeButtonListener(newTaskObject);
   });
 
   moreButton.addEventListener('click', () => {
-    moreButtonListener(toDoList, taskItem, taskInput, task, doneButton, removeButton, moreButton);
+    moreButtonListener(newTaskObject);
   });
 
   checkbox.addEventListener('click', () => {
-    checkboxListener(toDoList, task, checkbox, taskInput);
+    checkboxListener(newTaskObject);
   });
 
   return taskItem;
@@ -191,10 +219,11 @@ export const removeAllCompleted = (toDoList) => {
   let removed = false;
 
   for (let i = toDoList.tasks.length - 1; i >= 0; i -= 1) {
-    if (toDoList.tasks.at(i).completed === true) {
+    const currentTask = toDoList.tasks.at(i);
+    if (currentTask.completed === true) {
       removed = true;
       const item = listItems.item(i * 2 + 1);
-      removeButtonListener(toDoList, item, toDoList.tasks.at(i));
+      removeButtonListener({ toDoList, taskItem: item, task: currentTask });
     }
   }
 
